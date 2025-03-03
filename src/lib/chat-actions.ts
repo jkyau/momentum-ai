@@ -93,6 +93,11 @@ export const executeChatAction = async (action: ChatAction): Promise<{ success: 
         }
         
         const note = await response.json();
+        
+        // Get the note store and add the new note
+        const { addNote } = useNoteStore.getState();
+        addNote(note);
+        
         toast.success("Note created successfully");
         return { success: true, message: "Note created successfully" };
       }
@@ -114,6 +119,11 @@ export const executeChatAction = async (action: ChatAction): Promise<{ success: 
         }
         
         const note = await response.json();
+        
+        // Get the note store and update the note
+        const { updateNote } = useNoteStore.getState();
+        updateNote(action.id, note);
+        
         toast.success("Note updated successfully");
         return { success: true, message: "Note updated successfully" };
       }
@@ -126,6 +136,10 @@ export const executeChatAction = async (action: ChatAction): Promise<{ success: 
         if (!response.ok) {
           throw new Error("Failed to delete note");
         }
+        
+        // Get the note store and delete the note
+        const { deleteNote } = useNoteStore.getState();
+        deleteNote(action.id);
         
         toast.success("Note deleted successfully");
         return { success: true, message: "Note deleted successfully" };

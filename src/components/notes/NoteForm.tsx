@@ -13,6 +13,7 @@ export const NoteForm = () => {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { addNote } = useNoteStore();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,11 +53,11 @@ export const NoteForm = () => {
       
       const note = await response.json();
       
+      addNote(note);
+      
       toast.success("Note created successfully");
       setTitle("");
       setText("");
-      
-      router.refresh();
     } catch (error) {
       console.error("Error creating note:", error);
       toast.error("Failed to create note");

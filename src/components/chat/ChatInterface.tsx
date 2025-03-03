@@ -103,7 +103,7 @@ export const ChatInterface = () => {
       
       // Handle action if present
       if (data.action) {
-        handleAction(data.action);
+        await handleAction(data.action);
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -123,29 +123,55 @@ export const ChatInterface = () => {
     }
   };
   
-  const handleAction = (action: any) => {
+  const handleAction = async (action: any) => {
     try {
-      switch (action.action) {
+      switch (action.type) {
         case "CREATE_TASK":
-          // Update local state
-          if (action.id) {
-            addTask({
-              id: action.id,
+          // Make API request to create task
+          const taskResponse = await fetch("/api/tasks", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
               text: action.text,
               priority: action.priority || "MEDIUM",
-              project: action.project || null,
-              dueDate: action.dueDate || null,
-              completed: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              userId: "",
-            });
+              project: action.project,
+              dueDate: action.dueDate ? new Date(action.dueDate).toISOString() : null,
+            }),
+          });
+          
+          if (!taskResponse.ok) {
+            throw new Error("Failed to create task");
           }
+          
+          // Update local state
+          const newTask = await taskResponse.json();
+          addTask(newTask);
           
           setActionPerformed("Task created successfully");
           break;
           
         case "UPDATE_TASK":
+          // Make API request to update task
+          const updateTaskResponse = await fetch(`/api/tasks/${action.id}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              text: action.text,
+              priority: action.priority,
+              project: action.project,
+              dueDate: action.dueDate ? new Date(action.dueDate).toISOString() : undefined,
+              completed: action.completed,
+            }),
+          });
+          
+          if (!updateTaskResponse.ok) {
+            throw new Error("Failed to update task");
+          }
+          
           // Update local state
           updateTask(action.id, {
             text: action.text,
@@ -159,6 +185,15 @@ export const ChatInterface = () => {
           break;
           
         case "DELETE_TASK":
+          // Make API request to delete task
+          const deleteTaskResponse = await fetch(`/api/tasks/${action.id}`, {
+            method: "DELETE",
+          });
+          
+          if (!deleteTaskResponse.ok) {
+            throw new Error("Failed to delete task");
+          }
+          
           // Update local state
           deleteTask(action.id);
           
@@ -166,22 +201,46 @@ export const ChatInterface = () => {
           break;
           
         case "CREATE_NOTE":
-          // Update local state
-          if (action.id) {
-            addNote({
-              id: action.id,
+          // Make API request to create note
+          const noteResponse = await fetch("/api/notes", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
               title: action.title,
               text: action.text,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              userId: "",
-            });
+            }),
+          });
+          
+          if (!noteResponse.ok) {
+            throw new Error("Failed to create note");
           }
+          
+          // Update local state with the complete note object from the response
+          const newNote = await noteResponse.json();
+          addNote(newNote);
           
           setActionPerformed("Note created successfully");
           break;
           
         case "UPDATE_NOTE":
+          // Make API request to update note
+          const updateNoteResponse = await fetch(`/api/notes/${action.id}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              title: action.title,
+              text: action.text,
+            }),
+          });
+          
+          if (!updateNoteResponse.ok) {
+            throw new Error("Failed to update note");
+          }
+          
           // Update local state
           updateNote(action.id, {
             title: action.title,
@@ -192,6 +251,15 @@ export const ChatInterface = () => {
           break;
           
         case "DELETE_NOTE":
+          // Make API request to delete note
+          const deleteNoteResponse = await fetch(`/api/notes/${action.id}`, {
+            method: "DELETE",
+          });
+          
+          if (!deleteNoteResponse.ok) {
+            throw new Error("Failed to delete note");
+          }
+          
           // Update local state
           deleteNote(action.id);
           
