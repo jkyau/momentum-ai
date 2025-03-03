@@ -1,0 +1,26 @@
+name="momentum-nextjs"
+desc="Install or setup or create nextjs app default setup"
+glob=""
+
+## Step 1
+
+```bash
+mkdir temp; cd temp; npx create-next-app@latest . -y --typescript --tailwind --eslint --app --use-npm --src-dir --import-alias "@/*" -no --turbopack
+```
+
+## Step 2
+
+```bash
+cd .. && mv temp/* temp/.* . 2>/dev/null || true && rm -rf temp
+```
+
+## Step 3
+
+```
+npx shadcn@latest init
+```
+[!WARNING] The command "npx shadcn-ui" (CLI) is going to be deprecated soon use "npx install shadcn@latest"
+
+## Step 4
+- Install Lucide React Icons
+- Install Sonner Toast
