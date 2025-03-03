@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: momentum-nextjs
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./prisma:/app/prisma
+      - ./.env.docker:/app/.env
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+    command: npm run dev
+    depends_on:
+      - db
+  
+  db:
+    image: postgres:15
+    container_name: momentum-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: momentum
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data: 
