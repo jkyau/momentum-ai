@@ -1,13 +1,14 @@
+// Development middleware that bypasses Clerk authentication
+// In production, you would use the Clerk middleware
+
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-// Define all routes as public for testing purposes
+// Define public routes that don't require authentication
 const isPublicRoute = createRouteMatcher([
   '/',
   '/sign-in(.*)',
   '/sign-up(.*)',
-  '/api/webhook(.*)',
-  '/dashboard(.*)', // Temporarily allow access to dashboard routes
-  '/api(.*)'         // Temporarily allow access to API routes
+  '/api/webhook(.*)'
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

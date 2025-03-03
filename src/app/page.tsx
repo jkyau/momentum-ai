@@ -17,14 +17,6 @@ export default function Home() {
               Sign Up
             </button>
           </SignUpButton>
-          <Link 
-            href="/dashboard" 
-            className="px-4 py-2 rounded-md bg-green-500 text-white hover:bg-green-600 transition-colors"
-            aria-label="Go to Dashboard (Testing)"
-            tabIndex={0}
-          >
-            Dashboard (Test)
-          </Link>
         </div>
       </header>
       

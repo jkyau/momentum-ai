@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+// Remove mock auth import
+// import { mockAuth } from "@/lib/mock-auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 import OpenAI from "openai";
@@ -61,6 +63,7 @@ async function callOllamaAPI(messages: any[], model: string) {
 
 export async function POST(req: Request) {
   try {
+    // Use real auth instead of mock auth
     const { userId } = await auth();
 
     if (!userId) {
