@@ -57,6 +57,7 @@ model ChatLog {
   userId    String   @map("user_id")
   query     String
   response  String
+  modelProvider String? @map("model_provider")
   createdAt DateTime @default(now()) @map("created_at")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
