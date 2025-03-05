@@ -1,7 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { NoteDetail } from "@/components/notes/NoteDetail";
+import { formatDistanceToNow } from "date-fns";
+import Link from "next/link";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 
 interface NoteDetailPageProps {
   params: {
@@ -36,34 +38,56 @@ export default async function NoteDetailPage({ params }: NoteDetailPageProps) {
   
   if (!note) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <h2 className="text-2xl font-bold mb-2">Note Not Found</h2>
-        <p className="text-muted-foreground mb-4">
-          The note you're looking for doesn't exist or you don't have permission to view it.
-        </p>
-        <a 
-          href="/dashboard/notes" 
-          className="text-primary hover:underline"
-        >
-          Return to Notes
-        </a>
+      <div className="container mx-auto py-8 max-w-5xl">
+        <div className="bg-destructive/10 text-destructive p-4 rounded-md mb-6">
+          <h2 className="text-lg font-medium mb-2">Note not found</h2>
+          <p>The note you're looking for doesn't exist or you don't have permission to view it.</p>
+          <Link 
+            href="/dashboard/notes" 
+            className="mt-4 inline-block text-primary hover:underline"
+          >
+            Return to Notes
+          </Link>
+        </div>
       </div>
     );
   }
   
   return (
-    <div className="max-w-5xl mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Note Details</h1>
-        <a 
+    <div className="container mx-auto py-6 max-w-4xl">
+      <div className="mb-6 flex items-center justify-between">
+        <Link 
           href="/dashboard/notes" 
-          className="text-primary hover:underline"
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
         >
-          Back to Notes
-        </a>
+          <ArrowLeft size={16} />
+          <span>Back to notes</span>
+        </Link>
+        
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/dashboard/notes/${note.id}/edit`}
+            className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            <Edit size={16} />
+            <span>Edit</span>
+          </Link>
+        </div>
       </div>
       
-      <NoteDetail note={note} />
+      <div className="bg-card rounded-lg border shadow-sm p-6">
+        <h1 className="text-3xl font-bold mb-4">{note.title}</h1>
+        
+        <div className="text-sm text-muted-foreground mb-6">
+          Created {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
+        </div>
+        
+        <div className="prose prose-sm sm:prose lg:prose-lg max-w-none">
+          {note.text.split('\n').map((paragraph, index) => (
+            paragraph ? <p key={index}>{paragraph}</p> : <br key={index} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 } 

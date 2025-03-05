@@ -1,32 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
+import { Search, Edit, Trash2, Loader2, FileText, Plus } from "lucide-react";
 import { useNoteStore } from "@/lib/store";
-import { Note } from "@/lib/store";
-import { 
-  FileText, 
-  Edit, 
-  Trash2, 
-  Clock, 
-  Search 
-} from "lucide-react";
-import { format } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
+import Link from "next/link";
 
 export const NoteList = () => {
-  const router = useRouter();
-  const { user } = useUser();
-  const { notes, setNotes } = useNoteStore();
+  const { notes, setNotes, deleteNote } = useNoteStore();
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"createdAt" | "title">("createdAt");
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const router = useRouter();
   
   useEffect(() => {
     const fetchNotes = async () => {
-      if (!user) return;
-      
       try {
         const response = await fetch("/api/notes");
         
@@ -38,19 +29,17 @@ export const NoteList = () => {
         setNotes(data);
       } catch (error) {
         console.error("Error fetching notes:", error);
-        toast.error("Failed to load notes");
+        toast.error("Failed to load notes. Please refresh the page.");
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchNotes();
-  }, [user, setNotes]);
+  }, [setNotes]);
   
   const handleDeleteNote = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this note?")) {
-      return;
-    }
+    setIsDeleting(id);
     
     try {
       const response = await fetch(`/api/notes/${id}`, {
@@ -61,64 +50,60 @@ export const NoteList = () => {
         throw new Error("Failed to delete note");
       }
       
-      setNotes(notes.filter((note) => note.id !== id));
-      toast.success("Note deleted successfully");
+      deleteNote(id);
+      toast.success("Note deleted successfully!");
     } catch (error) {
       console.error("Error deleting note:", error);
-      toast.error("Failed to delete note");
+      toast.error("Failed to delete note. Please try again.");
+    } finally {
+      setIsDeleting(null);
     }
   };
+
+  const handleNoteClick = (id: string) => {
+    router.push(`/dashboard/notes/${id}`);
+  };
   
-  const filteredNotes = notes.filter((note) => {
-    if (!searchQuery.trim()) return true;
-    
-    const query = searchQuery.toLowerCase();
-    return (
-      note.title.toLowerCase().includes(query) ||
-      note.text.toLowerCase().includes(query)
-    );
-  });
-  
-  const sortedNotes = [...filteredNotes].sort((a, b) => {
-    if (sortBy === "title") {
-      return a.title.localeCompare(b.title);
-    }
-    
-    // Default: sort by createdAt (newest first)
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
+  const filteredNotes = notes
+    .filter((note) => {
+      const searchLower = searchQuery.toLowerCase();
+      return (
+        note.title.toLowerCase().includes(searchLower) ||
+        note.text.toLowerCase().includes(searchLower)
+      );
+    })
+    .sort((a, b) => {
+      if (sortBy === "createdAt") {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      } else {
+        return a.title.localeCompare(b.title);
+      }
+    });
   
   if (isLoading) {
     return (
-      <div className="border rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Notes</h2>
-        </div>
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
+      <div className="flex justify-center items-center min-h-[300px]">
+        <Loader2 className="animate-spin h-8 w-8 text-primary" />
       </div>
     );
   }
   
   return (
-    <div className="border rounded-lg p-6">
+    <div>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-        <h2 className="text-xl font-semibold">Notes</h2>
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search notes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-4 py-2 w-full rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-label="Search notes"
+          />
+        </div>
         
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search notes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 w-full sm:w-64 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              aria-label="Search notes"
-            />
-          </div>
-          
+        <div className="flex items-center gap-2">
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as "createdAt" | "title")}
@@ -128,60 +113,75 @@ export const NoteList = () => {
             <option value="createdAt">Sort by Date</option>
             <option value="title">Sort by Title</option>
           </select>
+          
+          <Link
+            href="/dashboard/notes/new"
+            className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            <Plus size={16} />
+            <span className="sr-only sm:not-sr-only">New Note</span>
+          </Link>
         </div>
       </div>
       
-      {sortedNotes.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
-          <p>No notes found. Create your first note to get started.</p>
+      {filteredNotes.length === 0 ? (
+        <div className="text-center py-12 border rounded-lg">
+          <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No notes found</h3>
+          <p className="text-muted-foreground mb-6">Create your first note to get started.</p>
+          <Link
+            href="/dashboard/notes/new"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            <Plus size={16} />
+            <span>Create Note</span>
+          </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {sortedNotes.map((note) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredNotes.map((note) => (
             <div 
               key={note.id} 
-              className="border rounded-md p-4 transition-colors hover:bg-muted/20"
+              className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
+              onClick={() => handleNoteClick(note.id)}
             >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  <h3 className="font-medium truncate">{note.title}</h3>
-                </div>
-                
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => router.push(`/dashboard/notes/${note.id}`)}
-                    className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted"
-                    aria-label="Edit note"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  
-                  <button
-                    onClick={() => handleDeleteNote(note.id)}
-                    className="text-muted-foreground hover:text-red-500 transition-colors p-1 rounded-md hover:bg-muted"
-                    aria-label="Delete note"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
+              <div className="p-4">
+                <h3 className="font-medium text-lg mb-2 line-clamp-1">{note.title}</h3>
+                <p className="text-muted-foreground text-sm line-clamp-3">{note.text}</p>
               </div>
-              
-              <div className="mt-2 text-sm text-muted-foreground line-clamp-3">
-                {note.text}
-              </div>
-              
-              {note.summary && (
-                <div className="mt-2 text-xs border-l-2 border-primary pl-2 italic">
-                  <p className="text-muted-foreground line-clamp-2">
-                    <span className="font-medium">AI Summary:</span> {note.summary}
-                  </p>
+              <div className="bg-muted/50 px-4 py-2 flex justify-between items-center">
+                <span className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
+                </span>
+                <div className="flex space-x-1">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/dashboard/notes/${note.id}`);
+                    }}
+                    className="p-1 rounded-md hover:bg-background transition-colors"
+                    aria-label={`Edit note: ${note.title}`}
+                  >
+                    <Edit size={14} className="text-muted-foreground" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm("Are you sure you want to delete this note?")) {
+                        handleDeleteNote(note.id);
+                      }
+                    }}
+                    className="p-1 rounded-md hover:bg-background transition-colors"
+                    aria-label={`Delete note: ${note.title}`}
+                    disabled={isDeleting === note.id}
+                  >
+                    {isDeleting === note.id ? (
+                      <Loader2 size={14} className="animate-spin text-muted-foreground" />
+                    ) : (
+                      <Trash2 size={14} className="text-muted-foreground" />
+                    )}
+                  </button>
                 </div>
-              )}
-              
-              <div className="mt-3 flex items-center text-xs text-muted-foreground">
-                <Clock className="h-3 w-3 mr-1" />
-                <span>{format(new Date(note.createdAt), "MMM d, yyyy")}</span>
               </div>
             </div>
           ))}
