@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { UserButton } from "@clerk/nextjs";
 import { 
   LayoutDashboard, 
   CheckSquare, 
@@ -11,7 +12,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Menu
+  Menu,
+  User
 } from "lucide-react";
 
 interface NavItemProps {
@@ -154,13 +156,40 @@ export const Sidebar = () => {
           />
         </nav>
         
-        <div className={`mt-auto ${isCollapsed && !isMobile ? "px-2" : "px-4"} pb-4`}>
+        <div className={`mt-auto ${isCollapsed && !isMobile ? "px-2" : "px-4"} space-y-2`}>
           <NavItem 
             href="/dashboard/settings" 
             icon={<Settings size={20} />} 
             label="Settings"
             isCollapsed={isCollapsed && !isMobile}
           />
+          
+          {/* User profile section with separator */}
+          <div className="border-t border-border my-2 pt-2">
+            <div 
+              className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 hover:bg-muted ${isCollapsed && !isMobile ? "justify-center" : ""}`}
+              aria-label="User profile"
+              tabIndex={0}
+            >
+              <div className="flex-shrink-0">
+                <UserButton 
+                  afterSignOutUrl="/"
+                  appearance={{
+                    elements: {
+                      userButtonAvatarBox: "w-8 h-8",
+                      userButtonTrigger: "focus:outline-none focus:ring-0"
+                    }
+                  }}
+                />
+              </div>
+              {!isCollapsed && (
+                <div className="transition-opacity duration-200 overflow-hidden">
+                  <span className="text-sm font-medium">Account</span>
+                  <p className="text-xs text-muted-foreground">Manage profile</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </aside>
 
