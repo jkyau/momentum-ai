@@ -13,8 +13,8 @@ services:
       - NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
       - NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
       - NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
-      - GOOGLE_CLIENT_ID=643726041957-mfjmu0c0hdvd8v2m44m92cj46ussfe17.apps.googleusercontent.com
-      - GOOGLE_CLIENT_SECRET=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
+      - GOOGLE_CLIENT_ID=your_google_client_id_here
+      - GOOGLE_CLIENT_SECRET=your_google_client_secret_here
       - GOOGLE_REDIRECT_URI=http://localhost:3000/settings?integration=google_calendar
       - ENCRYPTION_KEY=V3Q65/KUm+7FJe+W6nxMyh4YygJl2m/3
       - OLLAMA_API_URL=http://host.docker.internal:11434
