@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { z } from "zod";
-import { openai } from "@/lib/openai";
+import { ollama } from "@/lib/ollama";
 
 // Schema for note update validation
 const noteUpdateSchema = z.object({
@@ -12,7 +12,7 @@ const noteUpdateSchema = z.object({
 
 export async function GET(
   req: Request,
-  { params }: { params: { noteId: string } }
+  { params }: { params: Promise<{ noteId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -21,9 +21,11 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const { noteId } = await params;
+
     const note = await db.note.findUnique({
       where: {
-        id: params.noteId,
+        id: noteId,
         userId,
       },
     });
@@ -41,7 +43,7 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { noteId: string } }
+  { params }: { params: Promise<{ noteId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -50,39 +52,41 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const body = await req.json();
-    const validationResult = noteUpdateSchema.safeParse(body);
+    const { noteId } = await params;
 
-    if (!validationResult.success) {
-      return new NextResponse(JSON.stringify(validationResult.error), {
-        status: 400,
-      });
+    const body = await req.json();
+    const validatedData = noteUpdateSchema.safeParse(body);
+
+    if (!validatedData.success) {
+      return NextResponse.json(
+        { error: validatedData.error.errors },
+        { status: 400 }
+      );
     }
 
-    const { title, text } = validationResult.data;
-
-    // Check if note exists and belongs to user
-    const existingNote = await db.note.findUnique({
+    const note = await db.note.findUnique({
       where: {
-        id: params.noteId,
+        id: noteId,
         userId,
       },
     });
 
-    if (!existingNote) {
+    if (!note) {
       return new NextResponse("Note not found", { status: 404 });
     }
+
+    const { title, text } = validatedData.data;
 
     // Optional: Add AI processing for note text enhancement and summarization if text is updated
     let cleanedText = undefined;
     let summary = undefined;
     
-    if (text && text !== existingNote.text) {
+    if (text && text !== note.text) {
       try {
         // This could be an AI service call to enhance and summarize the note text
         if (text.length > 100) {
-          const response = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
+          const response = await ollama.chat.completions.create({
+            model: "llama3",
             messages: [
               {
                 role: "system",
@@ -90,31 +94,28 @@ export async function PATCH(
               },
               {
                 role: "user",
-                content: `Summarize the following text in 1-2 sentences: ${text}`
+                content: `Summarize the following text in 2-3 sentences: ${text}`
               }
-            ],
-            max_tokens: 100,
+            ]
           });
-          
-          summary = response.choices[0]?.message?.content?.trim() || null;
+
+          summary = response.choices[0].message.content;
         }
-        
-        cleanedText = text; // For now, we'll just use the original text
-      } catch (aiError) {
-        console.error("[AI_PROCESSING_ERROR]", aiError);
-        // Continue without AI enhancement if it fails
+      } catch (error) {
+        console.error("Error generating summary:", error);
+        // Continue without summary if AI processing fails
       }
     }
 
     const updatedNote = await db.note.update({
       where: {
-        id: params.noteId,
+        id: noteId,
       },
       data: {
         title,
         text,
-        cleanedText: text ? cleanedText : undefined,
-        summary: text ? summary : undefined,
+        cleanedText,
+        summary,
       },
     });
 
@@ -127,7 +128,7 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { noteId: string } }
+  { params }: { params: Promise<{ noteId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -136,22 +137,24 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const { noteId } = await params;
+
     // Check if note exists and belongs to user
-    const existingNote = await db.note.findUnique({
+    const note = await db.note.findUnique({
       where: {
-        id: params.noteId,
+        id: noteId,
         userId,
       },
     });
 
-    if (!existingNote) {
+    if (!note) {
       return new NextResponse("Note not found", { status: 404 });
     }
 
     // Delete the note
     await db.note.delete({
       where: {
-        id: params.noteId,
+        id: noteId,
       },
     });
 

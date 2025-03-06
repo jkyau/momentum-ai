@@ -6,9 +6,9 @@ import Link from "next/link";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 
 interface NoteDetailPageProps {
-  params: {
+  params: Promise<{
     noteId: string;
-  };
+  }>;
 }
 
 async function getNote(noteId: string, userId: string) {
@@ -34,7 +34,8 @@ export default async function NoteDetailPage({ params }: NoteDetailPageProps) {
     redirect("/sign-in");
   }
   
-  const note = await getNote(params.noteId, userId);
+  const { noteId } = await params;
+  const note = await getNote(noteId, userId);
   
   if (!note) {
     return (
@@ -83,7 +84,7 @@ export default async function NoteDetailPage({ params }: NoteDetailPageProps) {
         </div>
         
         <div className="prose prose-sm sm:prose lg:prose-lg max-w-none">
-          {note.text.split('\n').map((paragraph, index) => (
+          {note.text.split('\n').map((paragraph: string, index: number) => (
             paragraph ? <p key={index}>{paragraph}</p> : <br key={index} />
           ))}
         </div>

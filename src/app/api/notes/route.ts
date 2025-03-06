@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { z } from "zod";
-import { openai } from "@/lib/openai";
+import { ollama } from "@/lib/ollama";
 
 // Schema for note creation/update validation
 const noteSchema = z.object({
@@ -60,8 +60,8 @@ export async function POST(req: Request) {
     try {
       // This could be an AI service call to enhance and summarize the note text
       if (text.length > 100) {
-        const response = await openai.chat.completions.create({
-          model: "gpt-3.5-turbo",
+        const response = await ollama.chat.completions.create({
+          model: "llama3",
           messages: [
             {
               role: "system",
@@ -69,19 +69,16 @@ export async function POST(req: Request) {
             },
             {
               role: "user",
-              content: `Summarize the following text in 1-2 sentences: ${text}`
+              content: `Summarize the following text in 2-3 sentences: ${text}`
             }
-          ],
-          max_tokens: 100,
+          ]
         });
-        
-        summary = response.choices[0]?.message?.content?.trim() || null;
+
+        summary = response.choices[0].message.content;
       }
-      
-      cleanedText = text; // For now, we'll just use the original text
-    } catch (aiError) {
-      console.error("[AI_PROCESSING_ERROR]", aiError);
-      // Continue without AI enhancement if it fails
+    } catch (error) {
+      console.error("Error generating summary:", error);
+      // Continue without summary if AI processing fails
     }
 
     const note = await db.note.create({

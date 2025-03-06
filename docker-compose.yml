@@ -1,35 +1,43 @@
-version: '3'
-
 services:
-  nextjs:
+  momentum-nextjs:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: momentum-nextjs
     ports:
-      - "3002:3000"
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@momentum-db:5432/momentum
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_ZXhwZXJ0LWNyYXlmaXNoLTk3LmNsZXJrLmFjY291bnRzLmRldiQ
+      - CLERK_SECRET_KEY=sk_test_H3luKwWppPY4hTP2BSfd59j50kQoSh5pjUU7Pr67nk
+      - NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+      - NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+      - NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+      - NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+      - GOOGLE_CLIENT_ID=643726041957-mfjmu0c0hdvd8v2m44m92cj46ussfe17.apps.googleusercontent.com
+      - GOOGLE_CLIENT_SECRET=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
+      - GOOGLE_REDIRECT_URI=http://localhost:3000/settings?integration=google_calendar
+      - ENCRYPTION_KEY=V3Q65/KUm+7FJe+W6nxMyh4YygJl2m/3
+      - OLLAMA_API_URL=http://host.docker.internal:11434
+      - OLLAMA_MODEL=llama3
+      - DEFAULT_AI_PROVIDER=OLLAMA
+    depends_on:
+      - momentum-db
     volumes:
       - ./src:/app/src
       - ./public:/app/public
       - ./prisma:/app/prisma
-      - ./.env.docker:/app/.env
-    environment:
-      - NODE_ENV=development
-    restart: unless-stopped
-    command: npm run dev
-    depends_on:
-      - db
-  
-  db:
+      - ./start.sh:/app/start.sh
+      - /app/node_modules
+      - /app/.next
+
+  momentum-db:
     image: postgres:15
-    container_name: momentum-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: momentum
     ports:
       - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=momentum
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

@@ -53,8 +53,10 @@ export function FullPageEditor({ existingNote }: FullPageEditorProps) {
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown as any);
-    return () => window.removeEventListener("keydown", handleKeyDown as any);
+    if (typeof window !== 'undefined') {
+      window.addEventListener("keydown", handleKeyDown as any);
+      return () => window.removeEventListener("keydown", handleKeyDown as any);
+    }
   }, [title, text, isSaved, isSubmitting]);
 
   // Handle tab key in textarea
@@ -147,7 +149,7 @@ export function FullPageEditor({ existingNote }: FullPageEditorProps) {
   };
 
   const handleBack = () => {
-    if (!isSaved) {
+    if (!isSaved && typeof window !== 'undefined') {
       const confirmed = window.confirm("You have unsaved changes. Are you sure you want to leave?");
       if (!confirmed) return;
     }

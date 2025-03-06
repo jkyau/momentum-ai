@@ -21,20 +21,35 @@ model User {
 }
 
 model Task {
-  id          String    @id @default(uuid())
-  userId      String    @map("user_id")
+  id          String    @id @default(cuid())
+  userId      String
   text        String
-  cleanedText String?   @map("cleaned_text")
-  completed   Boolean   @default(false)
-  priority    Priority  @default(MEDIUM)
+  priority    String    @default("MEDIUM")
   project     String?
-  dueDate     DateTime? @map("due_date")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  completed   Boolean   @default(false)
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Calendar integration fields
+  addToCalendar Boolean @default(false)
+  eventDuration Int?
+  eventTime     String?
+  reminderMinutes Int?
+  
+  // Recurrence fields
+  recurrence        Boolean   @default(false)
+  recurrencePattern String?
+  recurrenceCount   Int?
+  recurrenceEndDate DateTime?
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  calendarEvents TaskCalendarEvent[]
+  
   @@index([userId])
-  @@map("tasks")
+  @@index([completed])
+  @@index([dueDate])
 }
 
 model Note {
@@ -63,6 +78,65 @@ model ChatLog {
 
   @@index([userId])
   @@map("chat_logs")
+}
+
+model UserIntegration {
+  id                String    @id @default(cuid())
+  userId            String
+  provider          String
+  accessToken       String
+  refreshToken      String?
+  tokenExpiry       DateTime?
+  isActive          Boolean   @default(true)
+  defaultCalendarId String?   @default("primary")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  calendarWebhooks CalendarWebhook[]
+  
+  @@unique([userId, provider])
+  @@index([userId])
+  @@index([provider])
+}
+
+model TaskCalendarEvent {
+  id              String    @id @default(cuid())
+  taskId          String
+  calendarId      String
+  calendarEventId String
+  eventTime       String?
+  eventDuration   Int?
+  reminderMinutes Int?
+  
+  // Recurrence fields
+  recurrencePattern String?
+  recurrenceCount   Int?
+  recurrenceEndDate DateTime?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  @@index([taskId])
+}
+
+model CalendarWebhook {
+  id                String   @id @default(cuid())
+  channelId         String   @unique
+  resourceId        String
+  expiration        DateTime
+  calendarId        String
+  userIntegrationId String
+  createdAt         DateTime @default(now())
+  
+  // Relations
+  userIntegration UserIntegration @relation(fields: [userIntegrationId], references: [id], onDelete: Cascade)
+  
+  @@index([userIntegrationId])
+  @@index([expiration]) // For cleanup of expired webhooks
 }
 
 enum Priority {

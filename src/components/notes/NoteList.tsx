@@ -114,13 +114,6 @@ export const NoteList = () => {
             <option value="title">Sort by Title</option>
           </select>
           
-          <Link
-            href="/dashboard/notes/new"
-            className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-          >
-            <Plus size={16} />
-            <span className="sr-only sm:not-sr-only">New Note</span>
-          </Link>
         </div>
       </div>
       

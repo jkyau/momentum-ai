@@ -15,6 +15,23 @@ An AI task and notes manager for executives that helps them manage their workloa
   - Provide recommendations or insights based on user input.
 - **Task Prioritization and Organization:** Ability to sort and filter tasks by due date, priority, or project.
 - **Seamless Cross-Device Experience:** Sync across desktop, tablet, and mobile devices.
+- **Google Calendar Integration:** Sync tasks with Google Calendar.
+
+## Google Calendar Integration
+
+Momentum now includes Google Calendar integration, allowing you to:
+
+- Connect your Google Calendar account
+- Create calendar events from tasks
+- Set event duration and reminders
+- View and manage your schedule directly from Momentum
+
+To set up the integration:
+
+1. Go to the Settings page
+2. Navigate to the Integrations tab
+3. Click "Connect Calendar" and follow the prompts
+4. Once connected, you can enable calendar integration when creating or editing tasks
 
 ## Getting Started
 
@@ -25,6 +42,7 @@ An AI task and notes manager for executives that helps them manage their workloa
 - PostgreSQL (handled by Docker)
 - OpenAI API key (optional, for OpenAI models)
 - Ollama (optional, for open source models)
+- Google Cloud Platform account (for Calendar API)
 
 ### Installation
 
@@ -109,3 +127,7 @@ For local development:
 ## License
 
 [MIT License](LICENSE)
+
+## Environment Variables
+
+Create a `.env.local` file with the following variables:

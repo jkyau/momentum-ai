@@ -1,23 +1,27 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
+import { mockAuth } from "@/lib/mock-auth";
 
 export async function GET(
-  request: Request,
-  { params }: { params: { sessionId: string } }
+  req: Request,
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    const session = await auth();
+    // Try to get the user ID from Clerk auth
+    const clerkAuth = await auth();
     
-    if (!session?.userId) {
+    // If Clerk auth fails, use mock auth
+    const { userId } = clerkAuth.userId ? clerkAuth : await mockAuth();
+    
+    if (!userId) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
     }
     
-    const userId = session.userId;
-    const { sessionId } = params;
+    const { sessionId } = await params;
     
     // Parse the date from sessionId (format: yyyy-MM-dd)
     const [year, month, day] = sessionId.split("-").map(Number);
@@ -56,21 +60,24 @@ export async function GET(
 }
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { sessionId: string } }
+  req: Request,
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    const session = await auth();
+    // Try to get the user ID from Clerk auth
+    const clerkAuth = await auth();
     
-    if (!session?.userId) {
+    // If Clerk auth fails, use mock auth
+    const { userId } = clerkAuth.userId ? clerkAuth : await mockAuth();
+    
+    if (!userId) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
     }
     
-    const userId = session.userId;
-    const { sessionId } = params;
+    const { sessionId } = await params;
     
     // Parse the date from sessionId (format: yyyy-MM-dd)
     const [year, month, day] = sessionId.split("-").map(Number);

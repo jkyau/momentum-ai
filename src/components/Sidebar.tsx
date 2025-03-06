@@ -58,9 +58,11 @@ export const Sidebar = () => {
   // Handle responsive behavior
   useEffect(() => {
     const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth < 768) {
-        setIsCollapsed(true);
+      if (typeof window !== 'undefined') {
+        setIsMobile(window.innerWidth < 768);
+        if (window.innerWidth < 768) {
+          setIsCollapsed(true);
+        }
       }
     };
 
@@ -68,10 +70,12 @@ export const Sidebar = () => {
     checkScreenSize();
     
     // Add event listener
-    window.addEventListener('resize', checkScreenSize);
-    
-    // Cleanup
-    return () => window.removeEventListener('resize', checkScreenSize);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', checkScreenSize);
+      
+      // Cleanup
+      return () => window.removeEventListener('resize', checkScreenSize);
+    }
   }, []);
 
   const toggleSidebar = () => {

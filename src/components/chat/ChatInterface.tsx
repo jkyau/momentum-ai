@@ -13,6 +13,43 @@ const AI_PROVIDERS = {
   OLLAMA: "OLLAMA",
 };
 
+// Helper function to safely access localStorage
+const getLocalStorageItem = (key: string, defaultValue: string): string => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      return localStorage.getItem(key) || defaultValue;
+    } catch (error) {
+      console.error(`Error accessing localStorage for key ${key}:`, error);
+      return defaultValue;
+    }
+  }
+  return defaultValue;
+};
+
+// Helper function to safely set localStorage
+const setLocalStorageItem = (key: string, value: string): void => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      console.error(`Error setting localStorage for key ${key}:`, error);
+    }
+  }
+};
+
+// Helper function to safely use window.confirm
+const safeWindowConfirm = (message: string): boolean => {
+  if (typeof window !== 'undefined') {
+    try {
+      return window.confirm(message);
+    } catch (error) {
+      console.error(`Error using window.confirm:`, error);
+      return false;
+    }
+  }
+  return false;
+};
+
 export const ChatInterface = () => {
   const { messages, addMessage, clearMessages } = useChatStore();
   const { tasks, setTasks, addTask, updateTask, deleteTask } = useTaskStore();
@@ -20,15 +57,18 @@ export const ChatInterface = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [actionPerformed, setActionPerformed] = useState<string | null>(null);
-  const [modelProvider, setModelProvider] = useState<string>(
-    localStorage.getItem("preferredModelProvider") || AI_PROVIDERS.OPENAI
-  );
+  const [modelProvider, setModelProvider] = useState<string>(AI_PROVIDERS.OLLAMA); // Default to Ollama
   const [showModelSelector, setShowModelSelector] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
+  // Initialize modelProvider from localStorage when component mounts (client-side only)
+  useEffect(() => {
+    setModelProvider(getLocalStorageItem("preferredModelProvider", AI_PROVIDERS.OLLAMA));
+  }, []);
+  
   // Save preferred model provider to localStorage when it changes
   useEffect(() => {
-    localStorage.setItem("preferredModelProvider", modelProvider);
+    setLocalStorageItem("preferredModelProvider", modelProvider);
   }, [modelProvider]);
   
   // Scroll to bottom when messages change
@@ -80,7 +120,7 @@ export const ChatInterface = () => {
         if (data.code === "insufficient_quota" || (data.message && data.message.includes("quota"))) {
           // If OpenAI quota is exceeded, suggest switching to open source model
           if (data.suggestOllama && modelProvider === AI_PROVIDERS.OPENAI) {
-            const switchToOllama = window.confirm(
+            const switchToOllama = safeWindowConfirm(
               "OpenAI API quota exceeded. Would you like to switch to the open source model instead?"
             );
             
@@ -405,30 +445,25 @@ export const ChatInterface = () => {
           </div>
         </div>
         
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            placeholder="Type a message..."
+            className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background"
             disabled={isLoading}
-            aria-label="Message input"
           />
           <button
             type="submit"
-            className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
-            disabled={isLoading || !input.trim()}
+            className="p-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            disabled={!input.trim() || isLoading}
             aria-label="Send message"
           >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
+            <Send className="h-5 w-5" />
           </button>
         </form>
       </div>
     </div>
   );
-}; 
+};

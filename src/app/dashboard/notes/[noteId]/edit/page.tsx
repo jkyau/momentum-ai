@@ -19,14 +19,15 @@ async function getNote(noteId: string, userId: string) {
   }
 }
 
-export default async function EditNotePage({ params }: { params: { noteId: string } }) {
+export default async function EditNotePage({ params }: { params: Promise<{ noteId: string }> }) {
   const { userId } = await auth();
   
   if (!userId) {
     redirect("/sign-in");
   }
   
-  const note = await getNote(params.noteId, userId);
+  const { noteId } = await params;
+  const note = await getNote(noteId, userId);
   
   if (!note) {
     return (

@@ -2,11 +2,12 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { TaskDetail } from "@/components/tasks/TaskDetail";
+import { Task } from "@/lib/store";
 
 interface TaskDetailPageProps {
-  params: {
+  params: Promise<{
     taskId: string;
-  };
+  }>;
 }
 
 async function getTask(taskId: string, userId: string) {
@@ -32,7 +33,8 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
     redirect("/sign-in");
   }
   
-  const task = await getTask(params.taskId, userId);
+  const { taskId } = await params;
+  const task = await getTask(taskId, userId);
   
   if (!task) {
     return (
@@ -51,6 +53,15 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
     );
   }
   
+  // Ensure the task priority is one of the expected values
+  const typedTask = {
+    ...task,
+    priority: task.priority as "HIGH" | "MEDIUM" | "LOW",
+    dueDate: task.dueDate ? task.dueDate.toISOString() : undefined,
+    createdAt: task.createdAt.toISOString(),
+    updatedAt: task.updatedAt.toISOString()
+  } as Task;
+  
   return (
     <div className="max-w-5xl mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -63,7 +74,7 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
         </a>
       </div>
       
-      <TaskDetail task={task} />
+      <TaskDetail task={typedTask} />
     </div>
   );
 } 

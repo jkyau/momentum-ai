@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Calendar, CheckSquare, Square, Tag, Clock } from "lucide-react";
+import { Calendar, CheckSquare, Square, Tag, Clock, ExternalLink } from "lucide-react";
 import { Task } from "@/lib/store";
+import { TaskForm } from "./TaskForm";
 
 interface TaskDetailProps {
   task: Task;
@@ -157,107 +158,11 @@ export const TaskDetail = ({ task }: TaskDetailProps) => {
   if (isEditing) {
     return (
       <div className="border rounded-lg p-6 bg-card">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="text" className="text-sm font-medium">
-              Task Description
-            </label>
-            <textarea
-              id="text"
-              name="text"
-              value={formData.text}
-              onChange={handleInputChange}
-              className="w-full min-h-[100px] px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Enter task description"
-              required
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="priority" className="text-sm font-medium">
-                Priority
-              </label>
-              <select
-                id="priority"
-                name="priority"
-                value={formData.priority}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                disabled={isLoading}
-              >
-                <option value="HIGH">High</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="LOW">Low</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="project" className="text-sm font-medium">
-                Project (Optional)
-              </label>
-              <input
-                type="text"
-                id="project"
-                name="project"
-                value={formData.project}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Enter project name"
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="dueDate" className="text-sm font-medium">
-                Due Date (Optional)
-              </label>
-              <input
-                type="date"
-                id="dueDate"
-                name="dueDate"
-                value={formData.dueDate}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="flex items-center space-x-2 h-full pt-6">
-              <input
-                type="checkbox"
-                id="completed"
-                name="completed"
-                checked={formData.completed}
-                onChange={(e) => setFormData({ ...formData, completed: e.target.checked })}
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                disabled={isLoading}
-              />
-              <label htmlFor="completed" className="text-sm font-medium">
-                Mark as completed
-              </label>
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <button
-              type="button"
-              onClick={() => setIsEditing(false)}
-              className="px-4 py-2 border rounded-md hover:bg-gray-100 transition-colors"
-              disabled={isLoading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-              disabled={isLoading}
-            >
-              {isLoading ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
-        </form>
+        <h2 className="text-xl font-semibold mb-4">Edit Task</h2>
+        <TaskForm
+          existingTask={task}
+          onClose={() => setIsEditing(false)}
+        />
       </div>
     );
   }

@@ -20,8 +20,9 @@ import {
 } from "lucide-react";
 import { useTaskStore, Task } from "@/lib/store";
 import { format, isToday, isTomorrow, isAfter, isBefore, startOfDay } from "date-fns";
-import { FixedSizeList as List } from 'react-window';
-import InfiniteLoader from 'react-window-infinite-loader';
+// Temporarily removing virtualization imports
+// import { FixedSizeList as List } from 'react-window';
+// import InfiniteLoader from 'react-window-infinite-loader';
 
 // Custom hook for debounced value
 function useDebounce<T>(value: T, delay: number): T {
@@ -239,7 +240,7 @@ interface TaskGroupProps {
   editInputRef: React.RefObject<HTMLInputElement | null>;
   handleKeyDown: (e: React.KeyboardEvent, id: string) => void;
   handleToggleComplete: (id: string, completed: boolean) => void;
-  handleStartEdit: (task: any) => void;
+  handleStartEdit: (task: Task) => void;
   handleSaveEdit: (id: string) => void;
   handleCancelEdit: () => void;
   handleDeleteTask: (id: string) => void;
@@ -248,7 +249,6 @@ interface TaskGroupProps {
   setShowTaskActions: (id: string | null) => void;
   taskActionsRef: React.RefObject<HTMLDivElement | null>;
   renderDueDate: (dueDate: string | null) => React.ReactNode;
-  virtualizeItems: boolean;
 }
 
 const TaskGroup = memo(({
@@ -272,10 +272,9 @@ const TaskGroup = memo(({
   showTaskActions,
   setShowTaskActions,
   taskActionsRef,
-  renderDueDate,
-  virtualizeItems
+  renderDueDate
 }: TaskGroupProps) => {
-  // Row renderer for virtualized list
+  // Row renderer for virtualized list - temporarily disabled
   const rowRenderer = useCallback(({ index, style }: { index: number, style: React.CSSProperties }) => {
     const task = tasks[index];
     
@@ -345,7 +344,8 @@ const TaskGroup = memo(({
         {group} {group !== "No Due Date" && `(${tasks.length})`}
       </h3>
       
-      {virtualizeItems && tasks.length > 10 ? (
+      {/* Temporarily disabled virtualization */}
+      {/* {virtualizeItems && tasks.length > 10 ? (
         <List
           height={Math.min(400, tasks.length * 60)} // Limit height
           itemCount={tasks.length}
@@ -355,7 +355,7 @@ const TaskGroup = memo(({
         >
           {rowRenderer}
         </List>
-      ) : (
+      ) : ( */}
         <div className="space-y-1">
           {tasks.map((task) => (
             editingTaskId === task.id ? (
@@ -388,7 +388,7 @@ const TaskGroup = memo(({
             )
           ))}
         </div>
-      )}
+      {/* )} */}
     </div>
   );
 });
@@ -1112,7 +1112,6 @@ export const TaskBoard = () => {
               setShowTaskActions={setShowTaskActions}
               taskActionsRef={taskActionsRef}
               renderDueDate={renderDueDate}
-              virtualizeItems={virtualizeGroups && groupedTasks[group].length > 10}
             />
           ))}
         </div>
